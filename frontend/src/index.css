@@ -1,0 +1,75 @@
+:root {
+  /* Tokens usados pelos componentes (Header, ProductCard, Footer, etc).
+     Antes não existiam em lugar nenhum — os componentes ficavam sem estilo. */
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-text: #16171d;
+  --color-text-muted: #6b7280;
+  --color-border: #e5e4e7;
+  --color-primary: #e6197a;
+  --color-primary-dark: #c11268;
+  --color-accent-lime: #d9ff3f;
+  --color-accent-yellow: #ffd23f;
+  --color-accent-orange: #ff7a00;
+  --color-hero-bg: #eef0f4;
+  --color-collection-bg: #dce6f5;
+  --color-banner-bg: #eee9fb;
+  --color-footer-bg: #16171d;
+  --color-footer-text: #f3f4f6;
+  --color-footer-text-muted: #9ca3af;
+  --color-rating-badge-bg: #fef3c7;
+
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 2px 10px rgba(20, 20, 30, 0.06);
+  --shadow-card-hover: 0 14px 28px rgba(20, 20, 30, 0.12);
+  --transition-base: 0.2s ease;
+
+  font: 16px/1.5 "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Foco visível e consistente em toda a navegação por teclado — acessível e
+   mais "polido" do que o outline padrão do navegador. */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}

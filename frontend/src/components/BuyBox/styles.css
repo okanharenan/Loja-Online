@@ -1,0 +1,54 @@
+.buy-box__price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.buy-box__currency {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.buy-box__price {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.buy-box__cents {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.buy-box__old-price {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  margin-left: 4px;
+}
+
+.buy-box__cta {
+  width: 100%;
+  background: var(--color-accent-yellow);
+  color: #1b1b1f;
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  padding: 16px 0;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.buy-box__cta:hover {
+  filter: brightness(0.95);
+}
+
+.buy-box__cta:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

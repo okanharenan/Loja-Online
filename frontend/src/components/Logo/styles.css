@@ -1,0 +1,19 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.logo__image {
+  display: block;
+  height: 32px;
+  width: auto;
+}
+
+.logo--dark .logo__image {
+  filter: none;
+}
+
+.logo--light .logo__image {
+  filter: none;
+}

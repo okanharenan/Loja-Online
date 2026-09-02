@@ -1,0 +1,41 @@
+.filter-group {
+  border: none;
+  margin: 0 0 24px;
+  padding: 0 0 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.filter-group:last-child {
+  border-bottom: none;
+}
+
+.filter-group__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: none;
+  margin-bottom: 12px;
+  padding: 0;
+  color: var(--color-text);
+}
+
+.filter-group__options {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.filter-group__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.filter-group__option input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}

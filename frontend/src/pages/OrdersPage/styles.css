@@ -1,0 +1,62 @@
+.orders-page {
+  padding: 32px 20px 64px;
+}
+
+.orders-page__list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.orders-page__order {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+}
+
+.orders-page__order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.orders-page__status {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-rating-badge-bg);
+  color: #92400e;
+  font-weight: 600;
+}
+
+.orders-page__status--paid,
+.orders-page__status--delivered {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.orders-page__status--cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.orders-page__items {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.orders-page__total {
+  font-weight: 700;
+  text-align: right;
+}
