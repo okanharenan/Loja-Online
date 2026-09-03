@@ -1,23 +1,20 @@
 import { useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Search, LogOut } from "lucide-react";
 import miniCartIcon from "/src/assets/mini-cart.svg";
 import Logo from "../Logo";
 import { useAuth } from "../../context/AuthContext";
 import "./styles.css";
 
-// "Categorias" ainda não tem uma página própria — aponta pra listagem geral
-// de produtos até existir uma rota dedicada, pra não deixar o link morto.
-const NAV_LINKS = [
-  { to: "/", label: "Home" },
-  { to: "/produtos", label: "Produtos" },
-  { to: "/produtos", label: "Categorias" },
-  { to: "/meus-pedidos", label: "Meus Pedidos" },
-];
+// "Categorias" ainda não tem uma página própria — leva pra mesma listagem de
+// "Produtos", só que com ?view=categorias na URL. Isso é o que permite saber
+// qual das duas abas foi clicada por último (e destacar só ela), já que as
+// duas apontam pro mesmo /produtos.
 
 export default function Header({ cartCount = 0, initialQuery = "" }) {
   const [query, setQuery] = useState(initialQuery);
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
 
   function handleSearchSubmit(e) {
@@ -31,6 +28,11 @@ export default function Header({ cartCount = 0, initialQuery = "" }) {
   }
 
   const firstName = user?.name?.split(" ")[0];
+
+  const isProdutosPage = location.pathname === "/produtos";
+  const isCategoriasView = new URLSearchParams(location.search).get("view") === "categorias";
+  const isProdutosActive = isProdutosPage && !isCategoriasView;
+  const isCategoriasActive = isProdutosPage && isCategoriasView;
 
   return (
     <header className="header">
@@ -87,18 +89,39 @@ export default function Header({ cartCount = 0, initialQuery = "" }) {
       </div>
 
       <nav className="container header__nav">
-        {NAV_LINKS.map((link) => (
-          <NavLink
-            key={link.label}
-            to={link.to}
-            className={({ isActive }) =>
-              "header__nav-link" + (isActive ? " header__nav-link--active" : "")
-            }
-            end={link.to === "/"}
-          >
-            {link.label}
-          </NavLink>
-        ))}
+        <NavLink
+          to="/"
+          end
+          className={({ isActive }) =>
+            "header__nav-link" + (isActive ? " header__nav-link--active" : "")
+          }
+        >
+          Home
+        </NavLink>
+        <Link
+          to="/produtos"
+          className={
+            "header__nav-link" + (isProdutosActive ? " header__nav-link--active" : "")
+          }
+        >
+          Produtos
+        </Link>
+        <Link
+          to="/produtos?view=categorias"
+          className={
+            "header__nav-link" + (isCategoriasActive ? " header__nav-link--active" : "")
+          }
+        >
+          Categorias
+        </Link>
+        <NavLink
+          to="/meus-pedidos"
+          className={({ isActive }) =>
+            "header__nav-link" + (isActive ? " header__nav-link--active" : "")
+          }
+        >
+          Meus Pedidos
+        </NavLink>
       </nav>
     </header>
   );
