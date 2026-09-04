@@ -35,6 +35,7 @@ async function request(path, { method = "GET", body, auth = false } = {}) {
   return data;
 }
 
+
 // ---- Produtos ----
 export const productsApi = {
   list(filters = {}) {
@@ -53,6 +54,15 @@ export const productsApi = {
   },
   get(idOrSlug) {
     return request(`/api/products/${idOrSlug}`);
+  },
+  create(data) {
+    return request("/api/products", { method: "POST", body: data, auth: true });
+  },
+  update(id, data) {
+    return request(`/api/products/${id}`, { method: "PUT", body: data, auth: true });
+  },
+  remove(id) {
+    return request(`/api/products/${id}`, { method: "DELETE", auth: true });
   },
 };
 

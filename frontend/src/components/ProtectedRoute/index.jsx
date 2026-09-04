@@ -1,9 +1,8 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-// Bloqueia rotas que exigem login (carrinho, pedidos) e manda pra tela de
-// entrar, lembrando de onde o usuário veio pra redirecionar de volta depois.
-export default function ProtectedRoute() {
+
+export default function ProtectedRoute({ requireAdmin = false }) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -11,6 +10,10 @@ export default function ProtectedRoute() {
 
   if (!user) {
     return <Navigate to="/entrar" state={{ from: location.pathname }} replace />;
+  }
+
+  if (requireAdmin && user.role !== "ADMIN") {
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;

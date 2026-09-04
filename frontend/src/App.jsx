@@ -10,6 +10,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import CartPage from "./pages/CartPage";
 import OrdersPage from "./pages/OrdersPage";
+import AdminProductsPage from "./pages/AdminProductsPage";
 
 function App() {
   return (
@@ -27,6 +28,10 @@ function App() {
               <Route element={<ProtectedRoute />}>
                 <Route path="/carrinho" element={<CartPage />} />
                 <Route path="/meus-pedidos" element={<OrdersPage />} />
+              </Route>
+
+              <Route element={<ProtectedRoute requireAdmin />}>
+                <Route path="/admin/produtos" element={<AdminProductsPage />} />
               </Route>
 
               <Route path="*" element={<HomePage />} />

@@ -122,6 +122,16 @@ export default function Header({ cartCount = 0, initialQuery = "" }) {
         >
           Meus Pedidos
         </NavLink>
+        {user?.role === "ADMIN" && (
+          <NavLink
+            to="/admin/produtos"
+            className={({ isActive }) =>
+              "header__nav-link" + (isActive ? " header__nav-link--active" : "")
+            }
+          >
+            Admin
+          </NavLink>
+        )}
       </nav>
     </header>
   );

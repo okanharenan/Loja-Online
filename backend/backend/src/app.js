@@ -8,6 +8,9 @@ import { errorHandler } from "./middleware/errorHandler.js";
 
 export const app = express();
 
+
+app.set("trust proxy", 1);
+
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "*",
@@ -30,5 +33,5 @@ app.use((req, res) => {
   res.status(404).json({ error: "Rota não encontrada" });
 });
 
-// Precisa ser o último middleware registrado
+
 app.use(errorHandler);
