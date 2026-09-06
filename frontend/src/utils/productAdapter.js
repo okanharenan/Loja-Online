@@ -22,6 +22,12 @@ export const GALLERY_THEMES = [
   { bg: "#DCEBFC", glow: "rgba(37, 99, 235, 0.26)" },
 ];
 
+
+export function toPrice(value) {
+  return Number(value ?? 0);
+}
+
+
 export function adaptProductSummary(product) {
   const price = toPrice(product.price);
   const oldPrice = product.oldPrice ? toPrice(product.oldPrice) : undefined;
@@ -39,7 +45,6 @@ export function adaptProductSummary(product) {
   };
 }
 
-// Formato usado pelo ProductDetails / BuyBox / ProductOptions
 export function adaptProductDetails(product) {
   const colors = (product.colors || []).map((name) => ({
     id: name,
@@ -47,7 +52,7 @@ export function adaptProductDetails(product) {
   }));
 
   const mainImage = product.imageUrl || PLACEHOLDER_IMAGE;
-
+ 
   const images = Array.from({ length: 4 }, () => mainImage);
 
   return {
