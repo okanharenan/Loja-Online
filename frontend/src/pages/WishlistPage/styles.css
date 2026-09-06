@@ -1,0 +1,14 @@
+.wishlist-page {
+  padding: 40px 20px 64px;
+}
+
+.wishlist-page h1 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin: 0 0 24px;
+}
+
+.wishlist-page__empty {
+  color: var(--color-text-muted);
+  max-width: 420px;
+}

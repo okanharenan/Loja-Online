@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import starIcon from "/src/assets/star-icon.svg";
 import ProductOptions from "../ProductOptions";
 import BuyBox from "../BuyBox";
 import { GALLERY_THEMES } from "../../utils/productAdapter";
+import { useWishlist } from "../../context/WishlistContext";
 import "./styles.css";
 
 export default function ProductDetails({ product, onAddToCart, addingToCart }) {
@@ -16,6 +18,9 @@ export default function ProductDetails({ product, onAddToCart, addingToCart }) {
 
   const touchStartX = useRef(null);
   const galleryRef = useRef(null);
+  const navigate = useNavigate();
+  const { isWishlisted, toggle } = useWishlist();
+  const favorited = isWishlisted(product.id);
 
   const hasMultipleImages = product.images.length > 1;
   const theme = GALLERY_THEMES[activeImage % GALLERY_THEMES.length];
@@ -66,6 +71,14 @@ export default function ProductDetails({ product, onAddToCart, addingToCart }) {
 
   function handleBuy() {
     onAddToCart?.({ size: selectedSize, color: selectedColor });
+  }
+
+  async function handleToggleWishlist() {
+    try {
+      await toggle(product.id);
+    } catch (err) {
+      if (err.code === "NOT_AUTHENTICATED") navigate("/entrar");
+    }
   }
 
   return (
@@ -143,7 +156,21 @@ export default function ProductDetails({ product, onAddToCart, addingToCart }) {
       </div>
 
       <div className="product-details__info">
-        <h1 className="product-details__name">{product.name}</h1>
+        <div className="product-details__title-row">
+          <h1 className="product-details__name">{product.name}</h1>
+          <button
+            type="button"
+            className={
+              "product-details__wishlist" +
+              (favorited ? " product-details__wishlist--active" : "")
+            }
+            onClick={handleToggleWishlist}
+            aria-label={favorited ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+            aria-pressed={favorited}
+          >
+            <Heart size={22} fill={favorited ? "currentColor" : "none"} />
+          </button>
+        </div>
         <p className="product-details__meta">
           {product.category} | {product.brand} | REF:{product.ref}
         </p>

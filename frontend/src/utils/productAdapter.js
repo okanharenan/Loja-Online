@@ -1,8 +1,3 @@
-// O backend guarda cores como strings simples (ex: "blue", "black") e uma
-// única imagem por produto. Os componentes de UI foram feitos pensando num
-// mock mais rico (várias imagens, cores com hex). Este arquivo faz a ponte
-// entre os dois formatos, sem precisar mudar o schema do banco.
-
 const COLOR_HEX = {
   black: "#0a0a0a",
   white: "#f5f5f5",
@@ -19,10 +14,7 @@ const COLOR_HEX = {
 
 const PLACEHOLDER_IMAGE = "/collection-1.png";
 
-// Cada slide do carrossel de imagens do produto usa uma cor de fundo + um
-// brilho (glow) combinando atrás da foto — é um recurso puramente visual (a
-// foto em si é a mesma, duplicada, porque o banco só guarda 1 imagem por
-// produto), pra imitar o efeito de "vitrine" que lojas como Nike/Adidas usam.
+
 export const GALLERY_THEMES = [
   { bg: "#E3E2F9", glow: "rgba(124, 58, 237, 0.28)" },
   { bg: "#FDE4CF", glow: "rgba(249, 115, 22, 0.26)" },
@@ -30,13 +22,6 @@ export const GALLERY_THEMES = [
   { bg: "#DCEBFC", glow: "rgba(37, 99, 235, 0.26)" },
 ];
 
-// Preço vem do Prisma como Decimal e chega no JSON como string (ex: "219.00").
-// Sempre convertemos pra number antes de qualquer conta ou .toFixed().
-export function toPrice(value) {
-  return Number(value ?? 0);
-}
-
-// Formato usado pelo ProductCard / ProductListing
 export function adaptProductSummary(product) {
   const price = toPrice(product.price);
   const oldPrice = product.oldPrice ? toPrice(product.oldPrice) : undefined;
@@ -44,6 +29,7 @@ export function adaptProductSummary(product) {
 
   return {
     id: product.slug || product.id,
+    productId: product.id,
     name: product.name,
     category: product.category || "",
     image: product.imageUrl || PLACEHOLDER_IMAGE,
@@ -61,9 +47,7 @@ export function adaptProductDetails(product) {
   }));
 
   const mainImage = product.imageUrl || PLACEHOLDER_IMAGE;
-  // O banco guarda 1 imagem só por produto. Duplicamos ela pra ter o que
-  // mostrar no carrossel/miniaturas — assim que existir mais de uma imagem
-  // de verdade no schema, é só trocar essa linha por `product.images`.
+
   const images = Array.from({ length: 4 }, () => mainImage);
 
   return {

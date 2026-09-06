@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Search, LogOut } from "lucide-react";
+import { Search, LogOut, Heart } from "lucide-react";
 import miniCartIcon from "/src/assets/mini-cart.svg";
 import Logo from "../Logo";
 import { useAuth } from "../../context/AuthContext";
+import { useWishlist } from "../../context/WishlistContext";
 import "./styles.css";
 
 // "Categorias" ainda não tem uma página própria — leva pra mesma listagem de
@@ -16,6 +17,7 @@ export default function Header({ cartCount = 0, initialQuery = "" }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { count: wishlistCount } = useWishlist();
 
   function handleSearchSubmit(e) {
     e.preventDefault();
@@ -78,6 +80,14 @@ export default function Header({ cartCount = 0, initialQuery = "" }) {
                 Entrar
               </Link>
             </>
+          )}
+          {user && (
+            <Link to="/favoritos" className="header__wishlist" aria-label="Favoritos">
+              <Heart size={20} />
+              {wishlistCount > 0 && (
+                <span className="header__cart-badge">{wishlistCount}</span>
+              )}
+            </Link>
           )}
           <Link to="/carrinho" className="header__cart" aria-label="Carrinho">
             <img className="header__cart-icon" src={miniCartIcon} alt="" />

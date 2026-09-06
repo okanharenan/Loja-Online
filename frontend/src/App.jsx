@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
+import { WishlistProvider } from "./context/WishlistContext";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import HomePage from "./pages/HomePage";
@@ -10,6 +11,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import CartPage from "./pages/CartPage";
 import OrdersPage from "./pages/OrdersPage";
+import WishlistPage from "./pages/WishlistPage";
 import AdminProductsPage from "./pages/AdminProductsPage";
 
 function App() {
@@ -17,26 +19,29 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <CartProvider>
-          <Routes>
-            <Route element={<Layout />}>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/produtos" element={<ProductListingPage />} />
-              <Route path="/produto/:idOrSlug" element={<ProductViewPage />} />
-              <Route path="/entrar" element={<LoginPage />} />
-              <Route path="/cadastro" element={<RegisterPage />} />
+          <WishlistProvider>
+            <Routes>
+              <Route element={<Layout />}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/produtos" element={<ProductListingPage />} />
+                <Route path="/produto/:idOrSlug" element={<ProductViewPage />} />
+                <Route path="/entrar" element={<LoginPage />} />
+                <Route path="/cadastro" element={<RegisterPage />} />
 
-              <Route element={<ProtectedRoute />}>
-                <Route path="/carrinho" element={<CartPage />} />
-                <Route path="/meus-pedidos" element={<OrdersPage />} />
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/carrinho" element={<CartPage />} />
+                  <Route path="/meus-pedidos" element={<OrdersPage />} />
+                  <Route path="/favoritos" element={<WishlistPage />} />
+                </Route>
+
+                <Route element={<ProtectedRoute requireAdmin />}>
+                  <Route path="/admin/produtos" element={<AdminProductsPage />} />
+                </Route>
+
+                <Route path="*" element={<HomePage />} />
               </Route>
-
-              <Route element={<ProtectedRoute requireAdmin />}>
-                <Route path="/admin/produtos" element={<AdminProductsPage />} />
-              </Route>
-
-              <Route path="*" element={<HomePage />} />
-            </Route>
-          </Routes>
+            </Routes>
+          </WishlistProvider>
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>

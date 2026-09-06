@@ -112,4 +112,17 @@ export const ordersApi = {
   },
 };
 
+// ---- Lista de desejos ----
+export const wishlistApi = {
+  list() {
+    return request("/api/wishlist", { auth: true });
+  },
+  add(productId) {
+    return request("/api/wishlist", { method: "POST", body: { productId }, auth: true });
+  },
+  remove(productId) {
+    return request(`/api/wishlist/${productId}`, { method: "DELETE", auth: true });
+  },
+};
+
 export { getToken };
