@@ -9,6 +9,8 @@ import ProductListingPage from "./pages/ProductListingPage";
 import ProductViewPage from "./pages/ProductViewPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import CartPage from "./pages/CartPage";
 import OrdersPage from "./pages/OrdersPage";
 import WishlistPage from "./pages/WishlistPage";
@@ -27,6 +29,8 @@ function App() {
                 <Route path="/produto/:idOrSlug" element={<ProductViewPage />} />
                 <Route path="/entrar" element={<LoginPage />} />
                 <Route path="/cadastro" element={<RegisterPage />} />
+                <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
+                <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
 
                 <Route element={<ProtectedRoute />}>
                   <Route path="/carrinho" element={<CartPage />} />

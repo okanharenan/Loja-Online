@@ -75,6 +75,15 @@
   margin: 0;
 }
 
+.auth-form__success {
+  color: #15803d;
+  background: #f0fdf4;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
 .auth-form__issues {
   color: #dc2626;
   font-size: 0.8rem;

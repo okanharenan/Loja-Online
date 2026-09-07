@@ -42,6 +42,7 @@ model User {
   cartItems CartItem[]
   orders    Order[]
   wishlist  WishlistItem[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("users")
 }
@@ -129,4 +130,17 @@ model WishlistItem {
 
   @@unique([userId, productId])
   @@map("wishlist_items")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
 }

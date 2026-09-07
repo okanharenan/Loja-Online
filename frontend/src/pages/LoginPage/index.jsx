@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const successMessage = location.state?.message;
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -32,6 +33,7 @@ export default function LoginPage() {
     <div className="container auth-page">
       <form className="auth-form" onSubmit={handleSubmit}>
         <h1>Entrar</h1>
+        {successMessage && <p className="auth-form__success">{successMessage}</p>}
         {error && <p className="auth-form__error">{error}</p>}
 
         <label>
@@ -57,6 +59,10 @@ export default function LoginPage() {
         <button type="submit" disabled={loading}>
           {loading ? "Entrando..." : "Entrar"}
         </button>
+
+        <p className="auth-form__switch">
+          <Link to="/esqueci-senha">Esqueci minha senha</Link>
+        </p>
 
         <p className="auth-form__switch">
           Não tem conta? <Link to="/cadastro">Cadastre-se</Link>

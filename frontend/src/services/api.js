@@ -77,6 +77,12 @@ export const authApi = {
   me() {
     return request("/api/auth/me", { auth: true });
   },
+  forgotPassword(email) {
+    return request("/api/auth/forgot-password", { method: "POST", body: { email } });
+  },
+  resetPassword(token, password) {
+    return request("/api/auth/reset-password", { method: "POST", body: { token, password } });
+  },
 };
 
 // ---- Carrinho ----
