@@ -9,12 +9,15 @@ API REST em Node.js + Express + PostgreSQL (via Prisma) para a Digital Store.
 - **JWT** (`jsonwebtoken`) — autenticação
 - **bcryptjs** — hash de senhas
 - **zod** — validação de dados de entrada
+- **express-rate-limit** — limita tentativas em rotas sensíveis
+- **Resend** (via `fetch`) — envio do e-mail de recuperação de senha
+- **Vitest** — testes automatizados
 
 ## Como rodar localmente
 
 ### 1. Pré-requisitos
 - Node.js 18+
-- Um banco PostgreSQL rodando (local, Docker, ou um serviço gerenciado como Neon, Supabase ou Railway)
+- Um banco PostgreSQL (local, Docker, ou um serviço gerenciado como Supabase, Neon ou Railway)
 
 ### 2. Instalar dependências
 ```bash
@@ -25,19 +28,30 @@ npm install
 ```bash
 cp .env.example .env
 ```
-Edite o `.env` e preencha `DATABASE_URL` com a string de conexão do seu banco, e troque `JWT_SECRET` por uma chave aleatória (nunca use a de exemplo em produção).
+
+| Variável | Obrigatória | Descrição |
+|---|---|---|
+| `DATABASE_URL` | Sim | Connection string do Postgres (com pooler, ex: porta 6543 no Supabase) |
+| `DIRECT_URL` | Sim | Connection string direta do Postgres (usada pelas migrations) |
+| `JWT_SECRET` | Sim | Chave aleatória para assinar os tokens — **nunca reaproveite a de exemplo** |
+| `JWT_EXPIRES_IN` | Não | Validade do token (padrão `7d`) |
+| `PORT` | Não | Porta do servidor (padrão `3333`; o Render define a dele automaticamente) |
+| `FRONTEND_URL` | Sim | URL do frontend — usada no CORS e no link do e-mail de redefinição de senha |
+| `RESEND_API_KEY` | Não | Chave da API do [Resend](https://resend.com). Sem ela, o link de redefinição de senha só é impresso no console (bom para testar localmente) |
+| `EMAIL_FROM` | Não | Remetente do e-mail (padrão `Digital Store <onboarding@resend.dev>`) |
 
 ### 4. Rodar as migrations
-Isso cria as tabelas no banco a partir do `prisma/schema.prisma`:
+Cria as tabelas no banco a partir do `prisma/schema.prisma`:
 ```bash
-npx prisma migrate dev --name init
+npx prisma migrate dev
 ```
 
 ### 5. (Opcional) Popular o banco com dados de exemplo
 ```bash
 npm run seed
 ```
-Isso cria um usuário admin (`admin@digitalstore.com` / `admin123`) e os produtos de exemplo baseados no mock do front.
+Cria um usuário admin (`admin@digitalstore.com` / `admin123`) e um catálogo
+de produtos variados (marca, categoria, gênero e desconto diferentes entre si).
 
 ### 6. Subir o servidor
 ```bash
@@ -45,81 +59,57 @@ npm run dev
 ```
 A API sobe em `http://localhost:3333` (ou a porta definida em `PORT`).
 
+### 7. Rodar os testes
+```bash
+npm test
+```
+
 ## Endpoints
 
 ### Autenticação (`/api/auth`)
 | Método | Rota | Protegida | Descrição |
 |---|---|---|---|
-| POST | `/register` | Não | Cria um novo usuário |
-| POST | `/login` | Não | Autentica e retorna um token JWT |
+| POST | `/register` | Não | Cria um novo usuário (rate limit: 20/hora por IP) |
+| POST | `/login` | Não | Autentica e retorna um token JWT (rate limit: 10/15min por IP) |
 | GET | `/me` | Sim | Retorna os dados do usuário logado |
+| POST | `/forgot-password` | Não | Envia (ou loga no console) um link de redefinição de senha. Sempre responde com sucesso genérico, exista ou não o e-mail (rate limit: 5/15min por IP) |
+| POST | `/reset-password` | Não | Troca a senha usando o token recebido por e-mail (válido por 1h, uso único) |
 
 ### Produtos (`/api/products`)
 | Método | Rota | Protegida | Descrição |
 |---|---|---|---|
-| GET | `/` | Não | Lista produtos (aceita filtros via query string) |
-| GET | `/:idOrSlug` | Não | Detalhe de um produto |
+| GET | `/` | Não | Lista produtos paginados (aceita filtros via query string) |
+| GET | `/:idOrSlug` | Não | Detalhe de um produto (por id ou slug) |
 | POST | `/` | Admin | Cria um produto |
 | PUT | `/:id` | Admin | Atualiza um produto |
 | DELETE | `/:id` | Admin | Desativa um produto (soft delete) |
 
-Filtros disponíveis em `GET /api/products`: `category`, `q` (busca por nome), `minPrice`, `maxPrice`, `size`, `color`.
+Filtros disponíveis em `GET /api/products`: `category`, `brand`, `gender`,
+`q` (busca por nome), `minPrice`, `maxPrice`, `size`, `color`, `page`, `limit`
+(máximo 60 por página, padrão 12).
 
 ### Carrinho (`/api/cart`) — todas exigem login
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/` | Retorna o carrinho do usuário logado |
-| POST | `/` | Adiciona um item ao carrinho |
-| PUT | `/:itemId` | Atualiza a quantidade de um item |
+| POST | `/` | Adiciona um item (valida se a quantidade final não passa do estoque) |
+| PUT | `/:itemId` | Atualiza a quantidade de um item (mesma validação de estoque) |
 | DELETE | `/:itemId` | Remove um item do carrinho |
 
 ### Pedidos (`/api/orders`) — todas exigem login
 | Método | Rota | Descrição |
 |---|---|---|
-| POST | `/` | Fecha um pedido a partir do carrinho atual |
+| POST | `/` | Fecha um pedido a partir do carrinho atual (transação: cria o pedido, abate o estoque de cada item e limpa o carrinho) |
 | GET | `/` | Lista os pedidos do usuário logado |
-| GET | `/:id` | Detalhe de um pedido |
+| GET | `/:id` | Detalhe de um pedido (dono do pedido ou admin) |
+
+### Lista de desejos (`/api/wishlist`) — todas exigem login
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/` | Lista os favoritos do usuário logado |
+| POST | `/` | Adiciona um produto (idempotente — adicionar de novo não duplica) |
+| DELETE | `/:productId` | Remove um produto dos favoritos |
 
 ## Autenticação nas requisições
 
 Depois de logar, envie o token no header de todas as rotas protegidas:
-```
-Authorization: Bearer SEU_TOKEN_AQUI
-```
-
-## Estrutura de pastas
-
-```
-src/
-  config/prisma.js       # instância única do Prisma Client
-  controllers/            # lógica de cada rota
-  routes/                 # definição das rotas Express
-  middleware/
-    auth.js               # requireAuth / requireAdmin
-    errorHandler.js        # tratamento centralizado de erros
-  utils/AppError.js       # classe de erro customizada
-  app.js                  # configuração do Express (middlewares, rotas)
-  server.js               # ponto de entrada, sobe o servidor
-prisma/
-  schema.prisma           # modelos do banco
-  seed.js                 # popula o banco com dados de exemplo
-```
-
-## Deploy
-
-Este backend **não pode ser deployado na Vercel como projeto serverless simples** sem ajustes (Prisma + conexões PostgreSQL persistentes não combinam bem com funções serverless sem um connection pooler). Recomendado usar:
-- **Railway** ou **Render** — mais simples para APIs Express tradicionais com banco
-- Se insistir em Vercel: usar **Vercel Postgres** ou **Neon** com o adapter de conexão serverless do Prisma (`@prisma/adapter-neon`), e converter as rotas para funções serverless
-
-O **front-end** (que já está na Vercel) deve apontar para a URL pública dessa API através de uma variável de ambiente, por exemplo:
-```
-VITE_API_URL=https://sua-api.up.railway.app
-```
-
-## Conectando com o front-end
-
-No front, crie um `.env` com:
-```
-VITE_API_URL=http://localhost:3333
-```
-E troque os imports de `src/data/products.js` por chamadas `fetch(`${import.meta.env.VITE_API_URL}/api/products`)`, mantendo o mesmo formato de dados que os componentes já esperam.

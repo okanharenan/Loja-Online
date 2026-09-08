@@ -1,16 +1,28 @@
-# React + Vite
+# Digital Store — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Aplicação React (Vite) do e-commerce Digital Store — consome a API do
+[backend](../backend/backend/README.md) e não guarda nenhuma lógica de
+negócio própria (estoque, preço, permissões etc. são sempre validados no
+servidor; o front só reflete isso na UI).
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **React 18** + **Vite** — build e dev server
+- **React Router** — roteamento client-side (SPA)
+- **lucide-react** — ícones
+- CSS puro por componente (sem framework de UI), com tokens de design
+  centralizados em `src/index.css` (cores, sombras, raios de borda)
 
-## React Compiler
+## Como rodar localmente
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 1. Pré-requisitos
+- Node.js 18+
+- O [backend](../backend/backend/README.md) rodando (local ou já publicado)
 
-## Expanding the Oxlint configuration
+### 2. Instalar dependências
+```bash
+npm install
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+### 3. Configurar variáveis de ambiente
+Crie um arquivo `.env` na raiz desta pasta:
