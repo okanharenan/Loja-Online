@@ -234,7 +234,7 @@ export default function HomePage() {
       <section className="container home-feature-banner">
         <div className="home-feature-banner__image-wrap">
           <span className="home-feature-banner__dots" aria-hidden="true" />
-          <img src="/produc-image-1.jpeg" alt="Tênis Air Jordan em destaque" />
+          <img src="/produc-image-1.png" alt="Tênis Air Jordan em destaque" />
         </div>
 
         <div className="home-feature-banner__content">
