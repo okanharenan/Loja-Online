@@ -8,11 +8,13 @@ import {
   Footprints,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
 } from "lucide-react";
 import Section from "../../components/Section";
 import ProductListing from "../../components/ProductListing";
 import { productsApi } from "../../services/api";
 import { adaptProductSummary } from "../../utils/productAdapter";
+import { formatPrice } from "../../utils/format";
 import "./styles.css";
 
 const HERO_SLIDES = [
@@ -231,20 +233,36 @@ export default function HomePage() {
       {/* Banner final — oferta especial */}
       <section className="container home-feature-banner">
         <div className="home-feature-banner__image-wrap">
+          <span className="home-feature-banner__dots" aria-hidden="true" />
           <img src="/produc-image-1.jpeg" alt="Tênis Air Jordan em destaque" />
         </div>
 
         <div className="home-feature-banner__content">
-          <span className="home-feature-banner__eyebrow">Oferta especial</span>
+          <span className="home-feature-banner__badge">
+            <Sparkles size={14} strokeWidth={2.5} />
+            Oferta especial
+          </span>
           <h2 className="home-feature-banner__title">
             Air Jordan edição de colecionador
           </h2>
           <p className="home-feature-banner__text">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-            enim ad minim veniam, quis nostrud exercitation ullamco laboris
-            nisi ut aliquip.
+            eiusmod tempor incididunt ut labore et dolore magna aliqua.
           </p>
+
+          {jordanProduct && (
+            <div className="home-feature-banner__price">
+              {jordanProduct.oldPrice && (
+                <span className="home-feature-banner__price-old">
+                  {formatPrice(jordanProduct.oldPrice)}
+                </span>
+              )}
+              <span className="home-feature-banner__price-current">
+                {formatPrice(jordanProduct.price)}
+              </span>
+            </div>
+          )}
+
           <Link
             to={jordanProduct ? `/produto/${jordanProduct.id}` : "/produtos"}
             className="home-feature-banner__cta"

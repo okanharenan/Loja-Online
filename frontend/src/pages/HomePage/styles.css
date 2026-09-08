@@ -358,6 +358,7 @@
 }
 
 .home-feature-banner__image-wrap {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -370,17 +371,38 @@
   box-shadow: 0 30px 60px -24px rgba(20, 20, 30, 0.25);
 }
 
+/* Padrão de pontinhos decorativo, flutuando atrás do círculo — evita a
+   sensação de "vazio" que a foto sozinha deixava. */
+.home-feature-banner__dots {
+  position: absolute;
+  top: -28px;
+  right: -28px;
+  width: 96px;
+  height: 96px;
+  background-image: radial-gradient(var(--color-accent-yellow) 2.5px, transparent 2.5px);
+  background-size: 14px 14px;
+  opacity: 0.7;
+  z-index: 0;
+}
+
 .home-feature-banner__image-wrap img {
   width: 78%;
   object-fit: contain;
+  position: relative;
+  z-index: 1;
 }
 
-.home-feature-banner__eyebrow {
-  display: block;
+.home-feature-banner__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(230, 25, 122, 0.1);
   color: var(--color-primary);
   font-weight: 700;
-  font-size: 0.85rem;
-  margin-bottom: 10px;
+  font-size: 0.8rem;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  margin-bottom: 14px;
 }
 
 .home-feature-banner__title {
@@ -392,7 +414,26 @@
 .home-feature-banner__text {
   color: var(--color-text-muted);
   max-width: 440px;
-  margin: 0 0 24px;
+  margin: 0 0 20px;
+}
+
+.home-feature-banner__price {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.home-feature-banner__price-old {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.home-feature-banner__price-current {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--color-text);
 }
 
 .home-feature-banner__cta {
