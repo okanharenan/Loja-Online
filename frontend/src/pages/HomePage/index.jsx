@@ -142,46 +142,49 @@ export default function HomePage() {
           </div>
         ))}
 
-        <button
-          type="button"
-          className="home-hero__nav home-hero__nav--prev"
-          onClick={showPrevSlide}
-          aria-label="Slide anterior"
-        >
-          <ChevronLeft size={22} strokeWidth={2.5} />
-        </button>
-        <button
-          type="button"
-          className="home-hero__nav home-hero__nav--next"
-          onClick={showNextSlide}
-          aria-label="Próximo slide"
-        >
-          <ChevronRight size={22} strokeWidth={2.5} />
-        </button>
+        <div className="container home-hero__controls">
+          <button
+            type="button"
+            className="home-hero__nav home-hero__nav--prev"
+            onClick={showPrevSlide}
+            aria-label="Slide anterior"
+          >
+            <ChevronLeft size={18} strokeWidth={2.5} />
+          </button>
 
-        <div className="home-hero__slider-dots">
-          {HERO_SLIDES.map((slide, i) => (
-            <button
-              key={slide.image}
-              type="button"
-              aria-label={`Ir para slide ${i + 1}`}
-              className={
-                "home-hero__dot" + (i === activeSlide ? " home-hero__dot--active" : "")
-              }
-              onClick={() => setActiveSlide(i)}
-            >
-              {i === activeSlide && (
-                <span
-                  key={activeSlide}
-                  className="home-hero__dot-fill"
-                  style={{
-                    animationDuration: `${SLIDE_DURATION}ms`,
-                    animationPlayState: isPaused ? "paused" : "running",
-                  }}
-                />
-              )}
-            </button>
-          ))}
+          <div className="home-hero__slider-dots">
+            {HERO_SLIDES.map((slide, i) => (
+              <button
+                key={slide.image}
+                type="button"
+                aria-label={`Ir para slide ${i + 1}`}
+                className={
+                  "home-hero__dot" + (i === activeSlide ? " home-hero__dot--active" : "")
+                }
+                onClick={() => setActiveSlide(i)}
+              >
+                {i === activeSlide && (
+                  <span
+                    key={activeSlide}
+                    className="home-hero__dot-fill"
+                    style={{
+                      animationDuration: `${SLIDE_DURATION}ms`,
+                      animationPlayState: isPaused ? "paused" : "running",
+                    }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            className="home-hero__nav home-hero__nav--next"
+            onClick={showNextSlide}
+            aria-label="Próximo slide"
+          >
+            <ChevronRight size={18} strokeWidth={2.5} />
+          </button>
         </div>
       </section>
 
@@ -200,9 +203,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Coleções em destaque — categorias com ícone */}
+      {/* Categorias com ícone */}
       <section className="container home-categories">
-        <h2 className="home-categories__title">Coleções em destaque</h2>
+        <h2 className="home-categories__title">Compre por categoria</h2>
 
         <div className="home-categories__grid">
           {CATEGORY_ICONS.map(({ label, icon: Icon, href }) => (

@@ -41,9 +41,7 @@ export async function addItem(req, res) {
     throw new AppError("Produto não encontrado", 404);
   }
 
-  // Se já existe um item igual no carrinho, a quantidade final é a soma —
-  // então o limite de estoque precisa considerar o que já está lá, não só
-  // o incremento que está chegando agora.
+ 
   const existingItem = await prisma.cartItem.findUnique({
     where: {
       userId_productId_size_color: {

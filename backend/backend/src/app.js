@@ -9,9 +9,7 @@ import { errorHandler } from "./middleware/errorHandler.js";
 
 export const app = express();
 
-// Necessário no Render/Vercel/qualquer plataforma atrás de proxy reverso —
-// sem isso, o rate limit (e req.ip em geral) enxerga o IP do proxy em vez
-// do IP real de quem fez a requisição.
+
 app.set("trust proxy", 1);
 
 app.use(
