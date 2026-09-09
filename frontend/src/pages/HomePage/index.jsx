@@ -76,6 +76,7 @@ export default function HomePage() {
   const [error, setError] = useState(null);
   const [activeSlide, setActiveSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [featuredProduct, setFeaturedProduct] = useState(null);
 
   const SLIDE_DURATION = 5000;
 
@@ -85,6 +86,20 @@ export default function HomePage() {
       .then((data) => setProducts(data.products.map(adaptProductSummary)))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+  }, []);
+
+  // Produto do banner final é buscado por slug fixo, não pelo primeiro item
+  // da lista geral — a ordem da lista muda conforme produtos são
+  // criados/editados, o que fazia o banner às vezes linkar pra um tênis
+  // completamente diferente do que a promoção anunciava.
+  useEffect(() => {
+    productsApi
+      .get("nike-revolution-6")
+      .then((data) => setFeaturedProduct(adaptProductSummary(data.product)))
+      .catch(() => {
+        // se esse produto específico não existir no banco, o banner some
+        // o preço e só linka pra listagem geral — nunca mostra dado errado
+      });
   }, []);
 
   // Troca de slide automática — pausa quando o mouse está em cima (padrão
@@ -105,8 +120,6 @@ export default function HomePage() {
   function showNextSlide() {
     setActiveSlide((i) => (i + 1) % HERO_SLIDES.length);
   }
-
-  const jordanProduct = products[0];
 
   return (
     <div className="home-page">
@@ -234,7 +247,10 @@ export default function HomePage() {
       <section className="container home-feature-banner">
         <div className="home-feature-banner__image-wrap">
           <span className="home-feature-banner__dots" aria-hidden="true" />
-          <img src="/produc-image-1.png" alt="Tênis Air Jordan em destaque" />
+          <img
+            src={featuredProduct?.image || "/product-thumb-1.jpeg"}
+            alt={featuredProduct?.name || "Tênis em destaque"}
+          />
         </div>
 
         <div className="home-feature-banner__content">
@@ -243,28 +259,28 @@ export default function HomePage() {
             Oferta especial
           </span>
           <h2 className="home-feature-banner__title">
-            Air Jordan edição de colecionador
+            {featuredProduct?.name || "Destaque da semana"}
           </h2>
           <p className="home-feature-banner__text">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua.
+            Tecnologia Next Nature e conforto pro dia a dia — um dos
+            queridinhos da nossa vitrine, com desconto por tempo limitado.
           </p>
 
-          {jordanProduct && (
+          {featuredProduct && (
             <div className="home-feature-banner__price">
-              {jordanProduct.oldPrice && (
+              {featuredProduct.oldPrice && (
                 <span className="home-feature-banner__price-old">
-                  {formatPrice(jordanProduct.oldPrice)}
+                  {formatPrice(featuredProduct.oldPrice)}
                 </span>
               )}
               <span className="home-feature-banner__price-current">
-                {formatPrice(jordanProduct.price)}
+                {formatPrice(featuredProduct.price)}
               </span>
             </div>
           )}
 
           <Link
-            to={jordanProduct ? `/produto/${jordanProduct.id}` : "/produtos"}
+            to={featuredProduct ? `/produto/${featuredProduct.id}` : "/produtos"}
             className="home-feature-banner__cta"
           >
             Ver Oferta

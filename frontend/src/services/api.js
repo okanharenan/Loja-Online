@@ -1,3 +1,5 @@
+import { withCache, invalidateCache } from "../utils/apiCache";
+
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3333";
 
 function getToken() {
@@ -35,7 +37,6 @@ async function request(path, { method = "GET", body, auth = false } = {}) {
   return data;
 }
 
-
 // ---- Produtos ----
 export const productsApi = {
   list(filters = {}) {
@@ -50,19 +51,34 @@ export const productsApi = {
       }
     });
     const query = params.toString();
-    return request(`/api/products${query ? `?${query}` : ""}`);
+    const path = `/api/products${query ? `?${query}` : ""}`;
+    return withCache(path, () => request(path));
   },
   get(idOrSlug) {
-    return request(`/api/products/${idOrSlug}`);
+    const path = `/api/products/${idOrSlug}`;
+    return withCache(path, () => request(path));
   },
   create(data) {
-    return request("/api/products", { method: "POST", body: data, auth: true });
+    return request("/api/products", { method: "POST", body: data, auth: true }).then(
+      (res) => {
+        invalidateCache("/api/products");
+        return res;
+      },
+    );
   },
   update(id, data) {
-    return request(`/api/products/${id}`, { method: "PUT", body: data, auth: true });
+    return request(`/api/products/${id}`, { method: "PUT", body: data, auth: true }).then(
+      (res) => {
+        invalidateCache("/api/products");
+        return res;
+      },
+    );
   },
   remove(id) {
-    return request(`/api/products/${id}`, { method: "DELETE", auth: true });
+    return request(`/api/products/${id}`, { method: "DELETE", auth: true }).then((res) => {
+      invalidateCache("/api/products");
+      return res;
+    });
   },
 };
 
