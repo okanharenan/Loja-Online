@@ -13,6 +13,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import CartPage from "./pages/CartPage";
 import OrdersPage from "./pages/OrdersPage";
+import PaymentReturnPage from "./pages/PaymentReturnPage";
 import WishlistPage from "./pages/WishlistPage";
 import AdminProductsPage from "./pages/AdminProductsPage";
 
@@ -36,6 +37,7 @@ function App() {
                   <Route path="/carrinho" element={<CartPage />} />
                   <Route path="/meus-pedidos" element={<OrdersPage />} />
                   <Route path="/favoritos" element={<WishlistPage />} />
+                  <Route path="/pedido/retorno" element={<PaymentReturnPage />} />
                 </Route>
 
                 <Route element={<ProtectedRoute requireAdmin />}>

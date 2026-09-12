@@ -132,6 +132,9 @@ export const ordersApi = {
   get(id) {
     return request(`/api/orders/${id}`, { auth: true });
   },
+  pay(id) {
+    return request(`/api/orders/${id}/payment`, { method: "POST", auth: true });
+  },
 };
 
 // ---- Lista de desejos ----

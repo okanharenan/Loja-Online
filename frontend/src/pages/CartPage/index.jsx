@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { ordersApi } from "../../services/api";
 import { formatPrice } from "../../utils/format";
@@ -7,7 +6,6 @@ import "./styles.css";
 
 export default function CartPage() {
   const { items, total, updateItem, removeItem, refresh } = useCart();
-  const navigate = useNavigate();
   const [checkingOut, setCheckingOut] = useState(false);
   const [error, setError] = useState(null);
 
@@ -15,12 +13,15 @@ export default function CartPage() {
     setCheckingOut(true);
     setError(null);
     try {
-      await ordersApi.create();
+      const { order } = await ordersApi.create();
+      const { checkoutUrl } = await ordersApi.pay(order.id);
       await refresh();
-      navigate("/meus-pedidos");
+      // Sai do nosso site de propósito — o pagamento acontece na página
+      // hospedada pelo Mercado Pago (PIX, boleto ou cartão), e eles nos
+      // trazem de volta pra /pedido/retorno depois.
+      window.location.href = checkoutUrl;
     } catch (err) {
       setError(err.message);
-    } finally {
       setCheckingOut(false);
     }
   }

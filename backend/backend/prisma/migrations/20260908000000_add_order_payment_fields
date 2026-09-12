@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "orders" ADD COLUMN "stripeSessionId" TEXT;
+ALTER TABLE "orders" ADD COLUMN "stripeCheckoutUrl" TEXT;
+ALTER TABLE "orders" ADD COLUMN "stripePaymentIntentId" TEXT;
