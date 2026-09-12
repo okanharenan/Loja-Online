@@ -20,6 +20,14 @@ app.use(
     origin: process.env.FRONTEND_URL || "*",
   })
 );
+
+// O webhook do Stripe precisa do corpo BRUTO (não já convertido em objeto
+// JS) pra verificar a assinatura corretamente — por isso essa rota vem
+// antes do express.json() global e usa express.raw() no lugar. Tem que
+// vir antes: depois que um parser já leu o corpo da requisição, o
+// express.json() abaixo simplesmente pula essa rota (ela já foi "parseada").
+app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
+
 app.use(express.json());
 
 // Healthcheck — útil para confirmar que o deploy está de pé
