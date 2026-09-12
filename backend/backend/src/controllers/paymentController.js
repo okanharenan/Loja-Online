@@ -1,10 +1,10 @@
 import { prisma } from "../config/prisma.js";
 import { AppError } from "../utils/AppError.js";
-import { createPaymentPreference, getPayment } from "../utils/mercadoPago.js";
+import { createCheckoutSession, constructWebhookEvent } from "../utils/stripe.js";
 
 // POST /api/orders/:id/payment — gera o link de pagamento pra um pedido já
-// criado. Se o pedido já tiver uma preferência (ex: cliente saiu e voltou
-// pra tentar pagar de novo), reaproveita o link em vez de criar outro.
+// criado. Se o pedido já tiver uma sessão de checkout (ex: cliente saiu e
+// voltou pra tentar pagar de novo), reaproveita o link em vez de criar outro.
 export async function createOrderPayment(req, res) {
   const { id } = req.params;
 
@@ -25,83 +25,90 @@ export async function createOrderPayment(req, res) {
     throw new AppError("Este pedido não está mais aguardando pagamento", 409);
   }
 
-  if (order.mpInitPoint) {
-    res.json({ checkoutUrl: order.mpInitPoint });
+  if (order.stripeCheckoutUrl) {
+    res.json({ checkoutUrl: order.stripeCheckoutUrl });
     return;
   }
 
-  const { preferenceId, initPoint } = await createPaymentPreference(order);
+  const { sessionId, checkoutUrl } = await createCheckoutSession(order);
 
   await prisma.order.update({
     where: { id: order.id },
-    data: { mpPreferenceId: preferenceId, mpInitPoint: initPoint },
+    data: { stripeSessionId: sessionId, stripeCheckoutUrl: checkoutUrl },
   });
 
-  res.json({ checkoutUrl: initPoint });
+  res.json({ checkoutUrl });
 }
 
+async function markOrderPaid(orderId, paymentIntentId) {
+  if (!orderId) return;
 
-export async function handlePaymentWebhook(req, res) {
-  // O Mercado Pago manda o id do pagamento tanto via query string (formato
-  // legado ?topic=payment&id=123) quanto no corpo (formato novo, { data: { id } }).
-  const paymentId = req.query.id || req.body?.data?.id;
-  const topic = req.query.topic || req.body?.type;
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  // Idempotência: o Stripe pode reenviar o mesmo evento mais de uma vez.
+  if (!order || order.status === "PAID" || order.status === "CANCELLED") return;
 
- 
-  if (topic && topic !== "payment") {
-    res.sendStatus(200);
-    return;
-  }
+  await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      status: "PAID",
+      stripePaymentIntentId: paymentIntentId ? String(paymentIntentId) : null,
+    },
+  });
+}
 
-  if (!paymentId) {
-    res.sendStatus(200);
-    return;
-  }
-
-  const payment = await getPayment(paymentId);
-  const orderId = payment.external_reference;
+async function cancelOrderAndRestoreStock(orderId) {
+  if (!orderId) return;
 
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: { items: true },
   });
+  if (!order || order.status === "PAID" || order.status === "CANCELLED") return;
 
-  if (!order) {
-    // Pedido pode ter sido de outro ambiente (teste) ou já foi removido —
-    // não é um erro do nosso lado, só confirma o recebimento.
-    res.sendStatus(200);
-    return;
-  }
-
-  // Idempotência: se o pedido já está num estado final, não faz nada de
-  // novo — o Mercado Pago pode reenviar a mesma notificação várias vezes.
-  if (order.status === "PAID" || order.status === "CANCELLED") {
-    res.sendStatus(200);
-    return;
-  }
-
-  if (payment.status === "approved") {
-    await prisma.order.update({
-      where: { id: order.id },
-      data: { status: "PAID", mpPaymentId: String(payment.id) },
-    });
-  } else if (["rejected", "cancelled", "refunded", "charged_back"].includes(payment.status)) {
-    // Pagamento não foi adiante — devolve o estoque que tinha sido
-    // reservado na criação do pedido, numa transação só.
-    await prisma.$transaction([
-      prisma.order.update({
-        where: { id: order.id },
-        data: { status: "CANCELLED", mpPaymentId: String(payment.id) },
+  // Pagamento não foi adiante — devolve o estoque reservado na criação do
+  // pedido, numa transação só.
+  await prisma.$transaction([
+    prisma.order.update({ where: { id: orderId }, data: { status: "CANCELLED" } }),
+    ...order.items.map((item) =>
+      prisma.product.update({
+        where: { id: item.productId },
+        data: { stock: { increment: item.quantity } },
       }),
-      ...order.items.map((item) =>
-        prisma.product.update({
-          where: { id: item.productId },
-          data: { stock: { increment: item.quantity } },
-        }),
-      ),
-    ]);
-  }
- 
+    ),
+  ]);
+}
 
-  res.sendStatus(200);
+// POST /api/payments/webhook — chamado pelo Stripe, não pelo nosso front.
+// A rota recebe o corpo BRUTO da requisição (configurado em app.js) porque
+// a verificação de assinatura abaixo precisa dos bytes originais — se o
+// corpo já tivesse passado por JSON.parse, a assinatura não bateria mais.
+export async function handlePaymentWebhook(req, res) {
+  const signature = req.headers["stripe-signature"];
+  let event;
+
+  try {
+    event = constructWebhookEvent(req.body, signature);
+  } catch (err) {
+    console.error("Assinatura de webhook do Stripe inválida:", err.message);
+    res.status(400).send(`Webhook Error: ${err.message}`);
+    return;
+  }
+
+  const session = event.data.object;
+  const orderId = session.metadata?.orderId;
+
+  switch (event.type) {
+    case "checkout.session.completed":
+    case "checkout.session.async_payment_succeeded":
+      await markOrderPaid(orderId, session.payment_intent);
+      break;
+    case "checkout.session.expired":
+    case "checkout.session.async_payment_failed":
+      await cancelOrderAndRestoreStock(orderId);
+      break;
+    default:
+      break; // outros eventos do Stripe não nos interessam
+  }
+
+  res.json({ received: true });
 }
