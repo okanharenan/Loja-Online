@@ -1,114 +1,134 @@
-import { prisma } from "../config/prisma.js";
-import { AppError } from "../utils/AppError.js";
-import { createCheckoutSession, constructWebhookEvent } from "../utils/stripe.js";
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { CheckCircle2, Clock, XCircle } from "lucide-react";
+import { ordersApi } from "../../services/api";
+import "./styles.css";
 
-// POST /api/orders/:id/payment — gera o link de pagamento pra um pedido já
-// criado. Se o pedido já tiver uma sessão de checkout (ex: cliente saiu e
-// voltou pra tentar pagar de novo), reaproveita o link em vez de criar outro.
-export async function createOrderPayment(req, res) {
-  const { id } = req.params;
+// O Mercado Pago sempre nos traz de volta pra essa tela depois do
+// pagamento (aprovado, pendente ou recusado). Em vez de confiar no que
+// vem na URL (o cliente pode editar isso), buscamos o pedido de novo no
+// nosso banco pra mostrar o status real, que só muda de verdade quando o
+// webhook confirma o pagamento no backend.
+export default function PaymentReturnPage() {
+  const [searchParams] = useSearchParams();
+  const orderId = searchParams.get("order");
 
-  const order = await prisma.order.findUnique({
-    where: { id },
-    include: { items: { include: { product: true } } },
-  });
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  if (!order) {
-    throw new AppError("Pedido não encontrado", 404);
+  useEffect(() => {
+    if (!orderId) {
+      setLoading(false);
+      return;
+    }
+
+    // O webhook do Stripe pode demorar alguns segundos pra chegar —
+    // tenta de novo umas poucas vezes antes de desistir e mostrar "pendente".
+    let attempts = 0;
+    let cancelled = false;
+
+    function poll() {
+      ordersApi
+        .get(orderId)
+        .then((data) => {
+          if (cancelled) return;
+          setOrder(data.order);
+          attempts += 1;
+          if (data.order.status === "PENDING" && attempts < 5) {
+            setTimeout(poll, 2000);
+          } else {
+            setLoading(false);
+          }
+        })
+        .catch((err) => {
+          if (!cancelled) {
+            setError(err.message);
+            setLoading(false);
+          }
+        });
+    }
+
+    poll();
+    return () => {
+      cancelled = true;
+    };
+  }, [orderId]);
+
+  if (!orderId) {
+    return (
+      <div className="container payment-return">
+        <h1>Pedido não encontrado</h1>
+        <p>Não recebemos o número do pedido nesse retorno.</p>
+        <Link to="/produtos" className="payment-return__cta">
+          Voltar às compras
+        </Link>
+      </div>
+    );
   }
 
-  if (order.userId !== req.user.id && req.user.role !== "ADMIN") {
-    throw new AppError("Acesso negado a este pedido", 403);
+  if (loading) {
+    return (
+      <div className="container payment-return">
+        <h1>Confirmando seu pagamento...</h1>
+        <p>Isso leva só alguns segundos.</p>
+      </div>
+    );
   }
 
-  if (order.status !== "PENDING") {
-    throw new AppError("Este pedido não está mais aguardando pagamento", 409);
+  if (error) {
+    return (
+      <div className="container payment-return">
+        <h1>Não foi possível confirmar</h1>
+        <p className="payment-return__error">{error}</p>
+      </div>
+    );
   }
 
-  if (order.stripeCheckoutUrl) {
-    res.json({ checkoutUrl: order.stripeCheckoutUrl });
-    return;
-  }
+  const status = order?.status;
 
-  const { sessionId, checkoutUrl } = await createCheckoutSession(order);
-
-  await prisma.order.update({
-    where: { id: order.id },
-    data: { stripeSessionId: sessionId, stripeCheckoutUrl: checkoutUrl },
-  });
-
-  res.json({ checkoutUrl });
-}
-
-async function markOrderPaid(orderId, paymentIntentId) {
-  if (!orderId) return;
-
-  const order = await prisma.order.findUnique({ where: { id: orderId } });
-  // Idempotência: o Stripe pode reenviar o mesmo evento mais de uma vez.
-  if (!order || order.status === "PAID" || order.status === "CANCELLED") return;
-
-  await prisma.order.update({
-    where: { id: orderId },
-    data: {
-      status: "PAID",
-      stripePaymentIntentId: paymentIntentId ? String(paymentIntentId) : null,
+  const STATUS_CONFIG = {
+    PAID: {
+      icon: CheckCircle2,
+      color: "success",
+      title: "Pagamento aprovado!",
+      text: "Seu pedido já está sendo preparado.",
     },
-  });
-}
+    PENDING: {
+      icon: Clock,
+      color: "pending",
+      title: "Pagamento pendente",
+      text: "Assim que confirmarmos (pode levar alguns minutos, especialmente no boleto), você recebe a confirmação por e-mail.",
+    },
+    CANCELLED: {
+      icon: XCircle,
+      color: "error",
+      title: "Pagamento não aprovado",
+      text: "Não foi dessa vez — o estoque reservado já foi liberado. Você pode tentar de novo quando quiser.",
+    },
+  };
 
-async function cancelOrderAndRestoreStock(orderId) {
-  if (!orderId) return;
+  const config = STATUS_CONFIG[status] || STATUS_CONFIG.PENDING;
+  const Icon = config.icon;
 
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    include: { items: true },
-  });
-  if (!order || order.status === "PAID" || order.status === "CANCELLED") return;
+  return (
+    <div className="container payment-return">
+      <div className={`payment-return__icon payment-return__icon--${config.color}`}>
+        <Icon size={40} strokeWidth={2} />
+      </div>
+      <h1>{config.title}</h1>
+      <p>{config.text}</p>
 
-  // Pagamento não foi adiante — devolve o estoque reservado na criação do
-  // pedido, numa transação só.
-  await prisma.$transaction([
-    prisma.order.update({ where: { id: orderId }, data: { status: "CANCELLED" } }),
-    ...order.items.map((item) =>
-      prisma.product.update({
-        where: { id: item.productId },
-        data: { stock: { increment: item.quantity } },
-      }),
-    ),
-  ]);
-}
-
-// POST /api/payments/webhook — chamado pelo Stripe, não pelo nosso front.
-// A rota recebe o corpo BRUTO da requisição (configurado em app.js) porque
-// a verificação de assinatura abaixo precisa dos bytes originais — se o
-// corpo já tivesse passado por JSON.parse, a assinatura não bateria mais.
-export async function handlePaymentWebhook(req, res) {
-  const signature = req.headers["stripe-signature"];
-  let event;
-
-  try {
-    event = constructWebhookEvent(req.body, signature);
-  } catch (err) {
-    console.error("Assinatura de webhook do Stripe inválida:", err.message);
-    res.status(400).send(`Webhook Error: ${err.message}`);
-    return;
-  }
-
-  const session = event.data.object;
-  const orderId = session.metadata?.orderId;
-
-  switch (event.type) {
-    case "checkout.session.completed":
-    case "checkout.session.async_payment_succeeded":
-      await markOrderPaid(orderId, session.payment_intent);
-      break;
-    case "checkout.session.expired":
-    case "checkout.session.async_payment_failed":
-      await cancelOrderAndRestoreStock(orderId);
-      break;
-    default:
-      break; // outros eventos do Stripe não nos interessam
-  }
-
-  res.json({ received: true });
+      <div className="payment-return__actions">
+        <Link to="/meus-pedidos" className="payment-return__cta">
+          Ver meus pedidos
+        </Link>
+        {status === "CANCELLED" && (
+          <Link to="/produtos" className="payment-return__cta payment-return__cta--secondary">
+            Continuar comprando
+          </Link>
+        )}
+      </div>
+    </div>
+  );
 }
