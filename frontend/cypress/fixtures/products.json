@@ -1,0 +1,27 @@
+{
+  "products": [
+    {
+      "id": "9f000000-0000-0000-0000-000000000001",
+      "slug": "nike-revolution-6",
+      "name": "Nike Revolution 6 Next Nature",
+      "price": "219.00",
+      "oldPrice": "259.00",
+      "imageUrl": "/product-thumb-1.jpeg",
+      "category": "Casual",
+      "brand": "Nike",
+      "stock": 12
+    },
+    {
+      "id": "9f000000-0000-0000-0000-000000000002",
+      "slug": "adidas-runfalcon-1",
+      "name": "Adidas Runfalcon 3.0",
+      "price": "210.00",
+      "oldPrice": "300.00",
+      "imageUrl": "/product-thumb-3.jpeg",
+      "category": "Corrida",
+      "brand": "Adidas",
+      "stock": 8
+    }
+  ],
+  "meta": { "page": 1, "limit": 12, "total": 2, "totalPages": 1 }
+}

@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "id": "item1",
+      "quantity": 1,
+      "size": "41",
+      "color": "black",
+      "product": {
+        "id": "9f000000-0000-0000-0000-000000000001",
+        "name": "Nike Revolution 6 Next Nature",
+        "price": "219.00",
+        "imageUrl": "/product-thumb-1.jpeg",
+        "stock": 12
+      }
+    }
+  ],
+  "total": 219
+}

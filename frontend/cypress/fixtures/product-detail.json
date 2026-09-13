@@ -1,0 +1,19 @@
+{
+  "product": {
+    "id": "9f000000-0000-0000-0000-000000000001",
+    "slug": "nike-revolution-6",
+    "name": "Nike Revolution 6 Next Nature",
+    "description": "Tênis casual confortável pro dia a dia, com solado leve.",
+    "price": "219.00",
+    "oldPrice": "259.00",
+    "imageUrl": "/product-thumb-1.jpeg",
+    "category": "Casual",
+    "brand": "Nike",
+    "gender": "MASCULINO",
+    "rating": 4.7,
+    "reviewsCount": 90,
+    "sizes": ["39", "40", "41", "42", "43"],
+    "colors": ["black", "red"],
+    "stock": 12
+  }
+}
