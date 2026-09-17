@@ -6,13 +6,12 @@ import cartRoutes from "./routes/cartRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import addressRoutes from "./routes/addressRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 export const app = express();
 
-// Necessário no Render/Vercel/qualquer plataforma atrás de proxy reverso —
-// sem isso, o rate limit (e req.ip em geral) enxerga o IP do proxy em vez
-// do IP real de quem fez a requisição.
+
 app.set("trust proxy", 1);
 
 app.use(
@@ -21,11 +20,7 @@ app.use(
   })
 );
 
-// O webhook do Stripe precisa do corpo BRUTO (não já convertido em objeto
-// JS) pra verificar a assinatura corretamente — por isso essa rota vem
-// antes do express.json() global e usa express.raw() no lugar. Tem que
-// vir antes: depois que um parser já leu o corpo da requisição, o
-// express.json() abaixo simplesmente pula essa rota (ela já foi "parseada").
+
 app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
 
 app.use(express.json());
@@ -41,6 +36,7 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/addresses", addressRoutes);
 
 // Rota não encontrada
 app.use((req, res) => {

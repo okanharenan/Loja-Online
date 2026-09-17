@@ -1,6 +1,4 @@
 // Schema do banco de dados — Digital Store
-// Rode `npx prisma migrate dev --name init` depois de configurar o DATABASE_URL no .env
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -43,6 +41,7 @@ model User {
   orders    Order[]
   wishlist  WishlistItem[]
   passwordResetTokens PasswordResetToken[]
+  addresses Address[]
 
   @@map("users")
 }
@@ -98,6 +97,18 @@ model Order {
   stripeSessionId       String?
   stripeCheckoutUrl     String?
   stripePaymentIntentId String?
+  // "Foto" do endereço no momento da compra — não é uma referência viva pro
+  // cadastro de endereços, de propósito: se o cliente editar ou apagar o
+  // endereço depois, o pedido já feito continua mostrando pra onde foi
+  // enviado de verdade.
+  shippingRecipientName String?
+  shippingStreet        String?
+  shippingNumber        String?
+  shippingComplement    String?
+  shippingNeighborhood  String?
+  shippingCity          String?
+  shippingState         String?
+  shippingZipCode       String?
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 
@@ -146,4 +157,25 @@ model PasswordResetToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("password_reset_tokens")
+}
+
+model Address {
+  id            String   @id @default(uuid())
+  userId        String
+  label         String?  // ex: "Casa", "Trabalho" — opcional, só pra ajudar a reconhecer
+  recipientName String
+  zipCode       String
+  street        String
+  number        String
+  complement    String?
+  neighborhood  String
+  city          String
+  state         String   // sigla da UF, ex: "SP"
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("addresses")
 }

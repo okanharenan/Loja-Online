@@ -20,13 +20,11 @@ async function request(path, { method = "GET", body, auth = false } = {}) {
     body: body ? JSON.stringify(body) : undefined,
   });
 
-  // 204 No Content não tem corpo pra parsear
   if (response.status === 204) return null;
 
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    // O backend padroniza erros como { error: "mensagem" } ou { error, issues: [...] }
     const message = data?.error || "Erro inesperado ao falar com o servidor";
     const err = new Error(message);
     err.status = response.status;
@@ -37,7 +35,6 @@ async function request(path, { method = "GET", body, auth = false } = {}) {
   return data;
 }
 
-// ---- Produtos ----
 export const productsApi = {
   list(filters = {}) {
     const params = new URLSearchParams();
@@ -82,7 +79,6 @@ export const productsApi = {
   },
 };
 
-// ---- Autenticação ----
 export const authApi = {
   register(data) {
     return request("/api/auth/register", { method: "POST", body: data });
@@ -101,7 +97,6 @@ export const authApi = {
   },
 };
 
-// ---- Carrinho ----
 export const cartApi = {
   get() {
     return request("/api/cart", { auth: true });
@@ -121,10 +116,9 @@ export const cartApi = {
   },
 };
 
-// ---- Pedidos ----
 export const ordersApi = {
-  create() {
-    return request("/api/orders", { method: "POST", auth: true });
+  create(addressId) {
+    return request("/api/orders", { method: "POST", body: { addressId }, auth: true });
   },
   list() {
     return request("/api/orders", { auth: true });
@@ -137,7 +131,6 @@ export const ordersApi = {
   },
 };
 
-// ---- Lista de desejos ----
 export const wishlistApi = {
   list() {
     return request("/api/wishlist", { auth: true });
@@ -147,6 +140,21 @@ export const wishlistApi = {
   },
   remove(productId) {
     return request(`/api/wishlist/${productId}`, { method: "DELETE", auth: true });
+  },
+};
+
+export const addressApi = {
+  list() {
+    return request("/api/addresses", { auth: true });
+  },
+  create(data) {
+    return request("/api/addresses", { method: "POST", body: data, auth: true });
+  },
+  update(id, data) {
+    return request(`/api/addresses/${id}`, { method: "PUT", body: data, auth: true });
+  },
+  remove(id) {
+    return request(`/api/addresses/${id}`, { method: "DELETE", auth: true });
   },
 };
 

@@ -15,6 +15,7 @@ import CartPage from "./pages/CartPage";
 import OrdersPage from "./pages/OrdersPage";
 import PaymentReturnPage from "./pages/PaymentReturnPage";
 import WishlistPage from "./pages/WishlistPage";
+import AddressesPage from "./pages/AddressesPage";
 import AdminProductsPage from "./pages/AdminProductsPage";
 
 function App() {
@@ -37,6 +38,7 @@ function App() {
                   <Route path="/carrinho" element={<CartPage />} />
                   <Route path="/meus-pedidos" element={<OrdersPage />} />
                   <Route path="/favoritos" element={<WishlistPage />} />
+                  <Route path="/enderecos" element={<AddressesPage />} />
                   <Route path="/pedido/retorno" element={<PaymentReturnPage />} />
                 </Route>
 

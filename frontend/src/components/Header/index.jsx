@@ -7,10 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useWishlist } from "../../context/WishlistContext";
 import "./styles.css";
 
-// "Categorias" ainda não tem uma página própria — leva pra mesma listagem de
-// "Produtos", só que com ?view=categorias na URL. Isso é o que permite saber
-// qual das duas abas foi clicada por último (e destacar só ela), já que as
-// duas apontam pro mesmo /produtos.
+
 
 export default function Header({ cartCount = 0, initialQuery = "" }) {
   const [query, setQuery] = useState(initialQuery);
@@ -132,6 +129,16 @@ export default function Header({ cartCount = 0, initialQuery = "" }) {
         >
           Meus Pedidos
         </NavLink>
+        {user && (
+          <NavLink
+            to="/enderecos"
+            className={({ isActive }) =>
+              "header__nav-link" + (isActive ? " header__nav-link--active" : "")
+            }
+          >
+            Meus Endereços
+          </NavLink>
+        )}
         {user?.role === "ADMIN" && (
           <NavLink
             to="/admin/produtos"

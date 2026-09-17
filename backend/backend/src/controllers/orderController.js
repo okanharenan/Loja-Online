@@ -1,8 +1,22 @@
+import { z } from "zod";
 import { prisma } from "../config/prisma.js";
 import { AppError } from "../utils/AppError.js";
 
+const createOrderSchema = z.object({
+  addressId: z
+    .string({ required_error: "Selecione um endereço de entrega" })
+    .uuid("Selecione um endereço de entrega"),
+});
+
 // POST /api/orders — cria um pedido a partir do carrinho atual do usuário
 export async function createOrder(req, res) {
+  const { addressId } = createOrderSchema.parse(req.body);
+
+  const address = await prisma.address.findUnique({ where: { id: addressId } });
+  if (!address || address.userId !== req.user.id) {
+    throw new AppError("Endereço de entrega inválido", 404);
+  }
+
   const cartItems = await prisma.cartItem.findMany({
     where: { userId: req.user.id },
     include: { product: true },
@@ -27,12 +41,21 @@ export async function createOrder(req, res) {
     0
   );
 
-  // Transação: cria o pedido, os itens, abate o estoque e limpa o carrinho
+  // Transação: cria o pedido (com a "foto" do endereço), os itens, abate o
+  // estoque e limpa o carrinho
   const order = await prisma.$transaction(async (tx) => {
     const newOrder = await tx.order.create({
       data: {
         userId: req.user.id,
         total,
+        shippingRecipientName: address.recipientName,
+        shippingStreet: address.street,
+        shippingNumber: address.number,
+        shippingComplement: address.complement,
+        shippingNeighborhood: address.neighborhood,
+        shippingCity: address.city,
+        shippingState: address.state,
+        shippingZipCode: address.zipCode,
         items: {
           create: cartItems.map((item) => ({
             productId: item.productId,

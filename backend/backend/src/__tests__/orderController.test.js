@@ -4,6 +4,7 @@ vi.mock("../config/prisma.js", () => ({
   prisma: {
     cartItem: { findMany: vi.fn() },
     order: { findUnique: vi.fn() },
+    address: { findUnique: vi.fn() },
     $transaction: vi.fn(),
   },
 }));
@@ -15,18 +16,49 @@ function mockRes() {
   return { status: vi.fn().mockReturnThis(), json: vi.fn() };
 }
 
+const VALID_ADDRESS = {
+  id: "11111111-1111-1111-1111-111111111111",
+  userId: "u1",
+  recipientName: "Ana Teste",
+  street: "Rua das Flores",
+  number: "123",
+  complement: null,
+  neighborhood: "Centro",
+  city: "Fortaleza",
+  state: "CE",
+  zipCode: "60000-000",
+};
+
 describe("orderController.createOrder", () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it("recusa fechar pedido sem informar um endereço", async () => {
+    const req = { user: { id: "u1" }, body: {} };
+
+    await expect(createOrder(req, mockRes())).rejects.toThrow(/endereço/i);
+    expect(prisma.address.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("recusa endereço que não existe ou é de outro usuário", async () => {
+    prisma.address.findUnique.mockResolvedValue({ ...VALID_ADDRESS, userId: "outro-usuario" });
+
+    const req = { user: { id: "u1" }, body: { addressId: "11111111-1111-1111-1111-111111111111" } };
+
+    await expect(createOrder(req, mockRes())).rejects.toThrow(/Endereço de entrega inválido/);
+    expect(prisma.cartItem.findMany).not.toHaveBeenCalled();
+  });
+
   it("recusa fechar pedido com carrinho vazio", async () => {
+    prisma.address.findUnique.mockResolvedValue(VALID_ADDRESS);
     prisma.cartItem.findMany.mockResolvedValue([]);
 
-    const req = { user: { id: "u1" } };
+    const req = { user: { id: "u1" }, body: { addressId: "11111111-1111-1111-1111-111111111111" } };
 
     await expect(createOrder(req, mockRes())).rejects.toThrow(/vazio/);
   });
 
   it("recusa fechar pedido se algum item não tem estoque suficiente", async () => {
+    prisma.address.findUnique.mockResolvedValue(VALID_ADDRESS);
     prisma.cartItem.findMany.mockResolvedValue([
       {
         productId: "p1",
@@ -35,12 +67,14 @@ describe("orderController.createOrder", () => {
       },
     ]);
 
-    const req = { user: { id: "u1" } };
+    const req = { user: { id: "u1" }, body: { addressId: "11111111-1111-1111-1111-111111111111" } };
 
     await expect(createOrder(req, mockRes())).rejects.toThrow(/Estoque insuficiente/);
   });
 
-  it("calcula o total certo, abate o estoque de cada item e limpa o carrinho", async () => {
+  it("calcula o total certo, grava o endereço no pedido, abate o estoque e limpa o carrinho", async () => {
+    prisma.address.findUnique.mockResolvedValue(VALID_ADDRESS);
+
     const cartItems = [
       {
         productId: "p1",
@@ -71,14 +105,22 @@ describe("orderController.createOrder", () => {
       })
     );
 
-    const req = { user: { id: "u1" } };
+    const req = { user: { id: "u1" }, body: { addressId: "11111111-1111-1111-1111-111111111111" } };
     const res = mockRes();
 
     await createOrder(req, res);
 
     // total = 2 * 100 + 1 * 50 = 250
     expect(txOrderCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ total: 250 }) })
+      expect.objectContaining({
+        data: expect.objectContaining({
+          total: 250,
+          shippingRecipientName: "Ana Teste",
+          shippingCity: "Fortaleza",
+          shippingState: "CE",
+          shippingZipCode: "60000-000",
+        }),
+      })
     );
     expect(txProductUpdate).toHaveBeenCalledWith({
       where: { id: "p1" },

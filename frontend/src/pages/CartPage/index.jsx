@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
-import { ordersApi } from "../../services/api";
+import { ordersApi, addressApi } from "../../services/api";
 import { formatPrice } from "../../utils/format";
 import "./styles.css";
 
@@ -9,16 +10,34 @@ export default function CartPage() {
   const [checkingOut, setCheckingOut] = useState(false);
   const [error, setError] = useState(null);
 
+  const [addresses, setAddresses] = useState([]);
+  const [loadingAddresses, setLoadingAddresses] = useState(true);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+
+  useEffect(() => {
+    addressApi
+      .list()
+      .then((data) => {
+        setAddresses(data.addresses);
+        const defaultAddress = data.addresses.find((a) => a.isDefault) || data.addresses[0];
+        if (defaultAddress) setSelectedAddressId(defaultAddress.id);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoadingAddresses(false));
+  }, []);
+
   async function handleCheckout() {
+    if (!selectedAddressId) {
+      setError("Escolha um endereço de entrega antes de continuar.");
+      return;
+    }
+
     setCheckingOut(true);
     setError(null);
     try {
-      const { order } = await ordersApi.create();
+      const { order } = await ordersApi.create(selectedAddressId);
       const { checkoutUrl } = await ordersApi.pay(order.id);
       await refresh();
-      // Sai do nosso site de propósito — o pagamento acontece na página
-      // hospedada pelo Mercado Pago (PIX, boleto ou cartão), e eles nos
-      // trazem de volta pra /pedido/retorno depois.
       window.location.href = checkoutUrl;
     } catch (err) {
       setError(err.message);
@@ -26,9 +45,6 @@ export default function CartPage() {
     }
   }
 
-  // Impede digitar uma quantidade maior que o estoque disponível ou menor
-  // que 1 — antes disso só era validado no backend, na hora de fechar o
-  // pedido, o que deixava o usuário só descobrir o problema no checkout.
   function handleQuantityChange(item, rawValue) {
     const parsed = Number(rawValue);
     if (!Number.isFinite(parsed)) return;
@@ -99,9 +115,48 @@ export default function CartPage() {
         })}
       </ul>
 
+      <div className="cart-page__address">
+        <div className="cart-page__address-header">
+          <h2>Endereço de entrega</h2>
+          <Link to="/enderecos">Gerenciar endereços</Link>
+        </div>
+
+        {loadingAddresses && <p>Carregando endereços...</p>}
+
+        {!loadingAddresses && addresses.length === 0 && (
+          <p className="cart-page__address-empty">
+            Você ainda não tem um endereço cadastrado.{" "}
+            <Link to="/enderecos">Cadastrar agora</Link>
+          </p>
+        )}
+
+        {!loadingAddresses && addresses.length > 0 && (
+          <div className="cart-page__address-list">
+            {addresses.map((address) => (
+              <label key={address.id} className="cart-page__address-option">
+                <input
+                  type="radio"
+                  name="address"
+                  checked={selectedAddressId === address.id}
+                  onChange={() => setSelectedAddressId(address.id)}
+                />
+                <span>
+                  <strong>{address.label || "Endereço"}</strong> — {address.street},{" "}
+                  {address.number}, {address.city}/{address.state}
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="cart-page__footer">
         <span className="cart-page__total">Total: {formatPrice(total)}</span>
-        <button type="button" onClick={handleCheckout} disabled={checkingOut}>
+        <button
+          type="button"
+          onClick={handleCheckout}
+          disabled={checkingOut || !selectedAddressId}
+        >
           {checkingOut ? "Finalizando..." : "Finalizar pedido"}
         </button>
       </div>
